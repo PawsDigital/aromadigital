@@ -72,6 +72,29 @@ body {
   pointer-events: none;
 }
 
+.background-logo {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(90vw, 850px);
+  height: auto;
+  transform: translate(-50%, -50%);
+
+  opacity: 0.09;
+filter:
+  blur(14px)
+  drop-shadow(0 0 50px rgba(31, 212, 255, 0.30))
+  drop-shadow(0 0 120px rgba(31, 212, 255, 0.16));
+
+  z-index: 0;
+  pointer-events: none;
+}
+
+.page-shell {
+  position: relative;
+  z-index: 1;
+}
+
 .aroma-digital-title,
 .hero-subtitle,
 .hero-socials,
@@ -217,11 +240,11 @@ body {
 /* SECTIUNE IMAGINI ARTISTI */
 .artists-section {
   width: 100%;
-  min-height: 130vh;
+  min-height: auto;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 18px;
+  gap: 40px 30px;
   flex-wrap: wrap;
   padding: 0 20px 20px;
 }
@@ -239,8 +262,8 @@ body {
 
 .artist-card {
   position: relative;
-  width: 280px;
-  height: 280px;
+  width: 250px;
+  height: 250px;
   border-radius: 50%;
   overflow: hidden;
   cursor: default;
