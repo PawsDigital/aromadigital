@@ -31,8 +31,7 @@ function animateScroll() {
   window.scrollTo(0, currentScroll);
 }
 
-/*
-window.addEventListener(
+/* window.addEventListener(
   'wheel',
   (event) => {
     event.preventDefault();
@@ -48,8 +47,7 @@ window.addEventListener(
     }
   },
   { passive: false }
-);
-*/
+); */
 
 window.addEventListener('resize', () => {
   currentScroll = window.scrollY;
@@ -69,19 +67,29 @@ const socials = document.querySelector('.hero-socials');
 const artistCards = document.querySelectorAll('.artist-link');
 
 // ==========================================
-// 1. ANIMAȚIA DE APARIȚIE LA ÎNCĂRCAREA PAGINII
-//    Rulează o singură dată, pe toate pozele
+// 1. EFECTUL DE APARIȚIE LA ÎNCĂRCAREA PAGINII
 // ==========================================
 
-function revealArtistsOnce() {
-  artistCards.forEach((card, index) => {
-    card.style.transitionDelay = `${index * 20}ms`;
-    card.classList.add('is-visible');
-  });
-}
+const observer = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+      }
+    });
+  },
+  {
+    threshold: 0.15
+  }
+);
+
+artistCards.forEach((card, index) => {
+  card.style.transitionDelay = `${index * 20}ms`;
+  observer.observe(card);
+});
 
 // ==========================================
-// 2. EFECTUL DE FADE CÂND HEADER-UL TRECE PESTE POZE
+// 2. EFECTUL DE FADE LA SCROLL
 // ==========================================
 
 function updateArtistFadeOnScroll() {
@@ -131,7 +139,6 @@ function requestFadeUpdate() {
   if (tickingFade) return;
 
   tickingFade = true;
-
   requestAnimationFrame(() => {
     updateArtistFadeOnScroll();
     tickingFade = false;
@@ -139,15 +146,13 @@ function requestFadeUpdate() {
 }
 
 // ==========================================
-// 3. CÂND SE RULEAZĂ EFECTELE
+// 3. CÂND SE RULEAZĂ EFECTUL
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', () => {
   currentScroll = 0;
   targetScroll = 0;
   window.scrollTo(0, 0);
-
-  revealArtistsOnce();
   updateArtistFadeOnScroll();
 });
 
