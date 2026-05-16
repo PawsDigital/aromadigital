@@ -601,27 +601,29 @@ filter:
   }
 
   .artist-link {
-    width: calc(50% - 6px);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    transform: none !important;
-    opacity: 1;
-  }
+  width: calc(50% - 6px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  opacity: 1;
+}
 
   .artist-card {
-    width: 100%;
-    height: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    overflow: visible;
-    border-radius: 0;
-    background: transparent;
-    transform: none !important;
-    filter: none !important;
-  }
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
+  filter: none !important;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: none;
+}
 
   .artist-image {
     width: 80%;
@@ -695,3 +697,46 @@ filter:
   }
 }
 
+/* ==================================================
+   FIX FADE SCROLL MOBILE
+   Pune acest bloc la finalul fișierului CSS
+================================================== */
+
+.artist-card {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* IMPORTANT: pe mobile NU mai blocăm transform-ul cu !important */
+@media (max-width: 768px) {
+  .artist-link {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .artist-card {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transition: none;
+
+    /* astea trebuie să poată fi controlate din JS */
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+
+  .artist-image {
+    filter: none !important;
+  }
+
+  .artist-overlay {
+    opacity: 1 !important;
+  }
+
+  .artist-link.is-disabled {
+    pointer-events: none;
+    user-select: none;
+  }
+}
