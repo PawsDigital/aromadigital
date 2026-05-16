@@ -1,58 +1,8 @@
 // ===============================
-// CONTROL SCROLL - MAI LENT + MAI FLUID
+// CONTROL SCROLL - STABIL MOBILE
 // ===============================
 
-const SCROLL_EASING = 0.1;
-const WHEEL_STRENGTH = 1.2;
-const TOUCHPAD_STRENGTH = 0.8;
-
-let currentScroll = window.scrollY;
-let targetScroll = window.scrollY;
-let isAnimatingScroll = false;
 let tickingFade = false;
-
-function clampScroll(value) {
-  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-  return Math.max(0, Math.min(value, maxScroll));
-}
-
-function animateScroll() {
-  const diff = targetScroll - currentScroll;
-
-  currentScroll += diff * SCROLL_EASING;
-
-  if (Math.abs(diff) < 0.3) {
-    currentScroll = targetScroll;
-    isAnimatingScroll = false;
-  } else {
-    requestAnimationFrame(animateScroll);
-  }
-
-  window.scrollTo(0, currentScroll);
-}
-
-/* window.addEventListener(
-  'wheel',
-  (event) => {
-    event.preventDefault();
-
-    const isTouchpad = Math.abs(event.deltaY) < 50;
-    const strength = isTouchpad ? TOUCHPAD_STRENGTH : WHEEL_STRENGTH;
-
-    targetScroll = clampScroll(targetScroll + event.deltaY * strength);
-
-    if (!isAnimatingScroll) {
-      isAnimatingScroll = true;
-      requestAnimationFrame(animateScroll);
-    }
-  },
-  { passive: false }
-); */
-
-window.addEventListener('resize', () => {
-  currentScroll = window.scrollY;
-  targetScroll = window.scrollY;
-});
 
 // La refresh, pagina pornește de sus
 if ('scrollRestoration' in history) {
@@ -75,11 +25,17 @@ const observer = new IntersectionObserver(
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
         entry.target.classList.add('is-visible');
+
+        // După apariție, scoatem delay-ul ca să nu afecteze fade-ul la scroll
+        entry.target.style.transitionDelay = '0ms';
+
+        observer.unobserve(entry.target);
       }
     });
   },
   {
-    threshold: 0.15
+    threshold: 0.05,
+    rootMargin: '0px 0px -5% 0px'
   }
 );
 
@@ -89,48 +45,64 @@ artistCards.forEach((card, index) => {
 });
 
 // ==========================================
-// 2. EFECTUL DE FADE LA SCROLL
+// 2. EFECTUL DE FADE LA SCROLL - OPTIMIZAT MOBILE
 // ==========================================
 
+const fadeItems = Array.from(artistCards)
+  .map((cardLink) => {
+    return {
+      link: cardLink,
+      card: cardLink.querySelector('.artist-card')
+    };
+  })
+  .filter((item) => item.card);
+
 function updateArtistFadeOnScroll() {
-  if (!socials || !artistCards.length) return;
+  if (!socials || !fadeItems.length) return;
 
   const triggerLine = socials.getBoundingClientRect().bottom;
 
-  artistCards.forEach((cardLink) => {
-    if (!cardLink.classList.contains('is-visible')) return;
+  // Ajustează valorile astea dacă vrei fade mai devreme sau mai târziu
+  const effectStart = triggerLine + 120;
+  const effectEnd = triggerLine - 40;
 
-    const card = cardLink.querySelector('.artist-card');
-    if (!card) return;
+  const minOpacity = 0.18;
+  const minScale = 0.92;
+  const maxTranslateY = -10;
 
-    const rect = cardLink.getBoundingClientRect();
+  // Citim pozițiile separat, apoi scriem stilurile.
+  // Asta reduce lag-ul pe telefon.
+  const measurements = fadeItems.map((item) => {
+    return {
+      link: item.link,
+      card: item.card,
+      rectTop: item.link.getBoundingClientRect().top
+    };
+  });
 
-    const effectStart = triggerLine + 25;
-    const effectEnd = triggerLine - 90;
-    const minOpacity = 0.18;
-    const minScale = 0.92;
-
+  measurements.forEach(({ link, card, rectTop }) => {
     let progress = 0;
 
-    if (rect.top >= effectStart) {
+    if (rectTop >= effectStart) {
       progress = 0;
-    } else if (rect.top <= effectEnd) {
+    } else if (rectTop <= effectEnd) {
       progress = 1;
     } else {
-      progress = (effectStart - rect.top) / (effectStart - effectEnd);
+      progress = (effectStart - rectTop) / (effectStart - effectEnd);
     }
 
-    const isFading = progress > 0;
-    cardLink.classList.toggle('is-disabled', isFading);
+    progress = Math.max(0, Math.min(progress, 1));
 
     const eased = 1 - Math.pow(1 - progress, 3);
 
     const opacity = 1 - (1 - minOpacity) * eased;
     const scale = 1 - (1 - minScale) * eased;
-    const translateY = -10 * eased;
+    const translateY = maxTranslateY * eased;
+
+    link.classList.toggle('is-disabled', progress > 0.02);
 
     card.style.opacity = opacity;
-    card.style.transform = `translateY(${translateY}px) scale(${scale})`;
+    card.style.transform = `translate3d(0, ${translateY}px, 0) scale(${scale})`;
     card.style.filter = 'none';
   });
 }
@@ -139,6 +111,7 @@ function requestFadeUpdate() {
   if (tickingFade) return;
 
   tickingFade = true;
+
   requestAnimationFrame(() => {
     updateArtistFadeOnScroll();
     tickingFade = false;
@@ -150,11 +123,25 @@ function requestFadeUpdate() {
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  currentScroll = 0;
-  targetScroll = 0;
   window.scrollTo(0, 0);
-  updateArtistFadeOnScroll();
+
+  requestAnimationFrame(() => {
+    updateArtistFadeOnScroll();
+  });
+});
+
+window.addEventListener('load', () => {
+  window.scrollTo(0, 0);
+
+  requestAnimationFrame(() => {
+    updateArtistFadeOnScroll();
+  });
 });
 
 window.addEventListener('scroll', requestFadeUpdate, { passive: true });
-window.addEventListener('resize', requestFadeUpdate);
+window.addEventListener('resize', requestFadeUpdate, { passive: true });
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    updateArtistFadeOnScroll();
+  }, 250);
+});
